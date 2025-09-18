@@ -1,0 +1,256 @@
+<!-- install.html - Chrome扩展安装说明页面 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=d            <div class="feature">
+                <h4>⚡ 快捷键</h4>
+                <p>Ctrl+N新建笔记，Ctrl+Enter保存，Esc取消</p>
+            </div>
+            <div class="feature">
+                <h4>🔗 URL识别</h4>
+                <p>自动识别笔记中的网址并转换为可点击链接</p>
+            </div>
+            <div class="feature">
+                <h4>📤 导出功能</h4>
+                <p>一键导出所有笔记到剪贴板</p>
+            </div>dth, initial-scale=1.0">
+    <title>Chrome扩展安装指南</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #4285f4, #34a853);
+            color: white;
+            border-radius: 10px;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4285f4;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #4285f4;
+        }
+        .code {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            background: #4285f4;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #3367d6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>� 我的笔记扩展</h1>
+        <p>优雅的侧边栏笔记管理扩展安装指南</p>
+    </div>
+
+    <div class="step">
+        <h3>📋 第一步：注意事项</h3>
+        <p>这是一个侧边栏笔记扩展，需要Chrome 114+版本支持Side Panel API：</p>
+        <div class="warning">
+            <strong>⚠️ 重要：</strong> 此扩展使用了Chrome Side Panel API，需要较新版本的Chrome浏览器。
+            如果你的Chrome版本较低，扩展可能无法正常工作。
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>🔧 第二步：打开Chrome扩展管理页面</h3>
+        <p>在Chrome浏览器中：</p>
+        <ol>
+            <li>点击右上角的三点菜单 <strong>⋮</strong></li>
+            <li>选择 <strong>更多工具</strong> → <strong>扩展程序</strong></li>
+            <li>或直接在地址栏输入：</li>
+        </ol>
+        <div class="code">chrome://extensions/</div>
+    </div>
+
+    <div class="step">
+        <h3>🛠️ 第三步：启用开发者模式</h3>
+        <p>在扩展管理页面：</p>
+        <ol>
+            <li>找到页面右上角的 <strong>"开发者模式"</strong> 开关</li>
+            <li>点击开关启用开发者模式</li>
+            <li>页面会显示额外的开发者选项</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>📁 第四步：加载扩展</h3>
+        <p>启用开发者模式后：</p>
+        <ol>
+            <li>点击 <strong>"加载已解压的扩展程序"</strong> 按钮</li>
+            <li>浏览并选择包含扩展文件的文件夹</li>
+            <li>选择 <code>ChromeExt</code> 文件夹</li>
+            <li>点击 <strong>"选择文件夹"</strong></li>
+        </ol>
+        
+        <div class="success">
+            <strong>🎉 成功！</strong> 扩展现在应该出现在扩展列表中。点击扩展图标即可打开侧边栏笔记面板。
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>🎯 扩展功能介绍</h3>
+        <div class="feature-list">
+            <div class="feature">
+                <h4>� 侧边栏笔记</h4>
+                <p>点击扩展图标打开优雅的侧边栏笔记面板</p>
+            </div>
+            <div class="feature">
+                <h4>🃏 卡片展示</h4>
+                <p>美观的卡片式笔记展示，支持自动换行</p>
+            </div>
+            <div class="feature">
+                <h4>✏️ 编辑功能</h4>
+                <p>在查看界面直接编辑和删除笔记</p>
+            </div>
+            <div class="feature">
+                <h4>🔍 模态查看</h4>
+                <p>点击笔记卡片在模态框中查看完整内容</p>
+            </div>
+            <div class="feature">
+                <h4>💾 云端同步</h4>
+                <p>使用Chrome存储API，数据跨设备同步</p>
+            </div>
+            <div class="feature">
+                <h4>⚡ 快捷键</h4>
+                <p>Ctrl+N新建笔记，Ctrl+Enter保存，Esc取消</p>
+            </div>
+            <div class="feature">
+                <h4>� 导出功能</h4>
+                <p>一键导出所有笔记到剪贴板</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>🔧 使用方法</h3>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+            <h4>基础操作：</h4>
+            <ul>
+                <li><strong>点击扩展图标</strong> - 打开侧边栏笔记面板</li>
+                <li><strong>新建笔记</strong> - 点击"✨ 新建笔记"按钮</li>
+                <li><strong>查看笔记</strong> - 点击任意笔记卡片在模态框中查看</li>
+                <li><strong>编辑笔记</strong> - 在查看模态框中点击"✏️ 编辑"按钮</li>
+                <li><strong>删除笔记</strong> - 在查看模态框中点击"🗑️ 删除"按钮</li>
+            </ul>
+            
+            <h4>快捷键：</h4>
+            <ul>
+                <li><strong>Ctrl + N</strong> - 新建笔记</li>
+                <li><strong>Ctrl + Enter</strong> - 保存笔记</li>
+                <li><strong>Esc</strong> - 取消编辑或关闭模态框</li>
+            </ul>
+            
+            <h4>高级功能：</h4>
+            <ul>
+                <li><strong>URL识别</strong> - 笔记中的网址会自动转换为可点击链接</li>
+                <li><strong>导出笔记</strong> - 点击"📤 导出"按钮复制所有笔记</li>
+                <li><strong>清空笔记</strong> - 点击"🗑️ 清空"按钮删除所有笔记</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>🛠️ 故障排除</h3>
+        <div class="warning">
+            <h4>常见问题：</h4>
+            <ul>
+                <li><strong>侧边栏不显示：</strong> 确保Chrome版本为114+，支持Side Panel API</li>
+                <li><strong>功能不工作：</strong> 检查浏览器控制台是否有错误信息</li>
+                <li><strong>数据丢失：</strong> 确保已登录Chrome账户以启用数据同步</li>
+                <li><strong>更新扩展：</strong> 修改代码后点击扩展管理页面的"重新加载"按钮</li>
+                <li><strong>权限问题：</strong> 确保扩展已正确安装并启用</li>
+            </ul>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+        <h3>🎉 享受你的笔记体验！</h3>
+        <p>现在你可以开始使用优雅的侧边栏笔记功能了。</p>
+        <a href="#" class="btn" onclick="window.close()">关闭此页面</a>
+    </div>
+
+    <script>
+        // 简单的交互功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 高亮代码块
+            const codeElements = document.querySelectorAll('code');
+            codeElements.forEach(el => {
+                el.style.background = '#e3f2fd';
+                el.style.padding = '2px 4px';
+                el.style.borderRadius = '3px';
+                el.style.fontSize = '0.9em';
+            });
+            
+            // 添加复制功能到代码块
+            const codeBlocks = document.querySelectorAll('.code');
+            codeBlocks.forEach(block => {
+                block.style.cursor = 'pointer';
+                block.title = '点击复制';
+                block.addEventListener('click', function() {
+                    navigator.clipboard.writeText(this.textContent);
+                    const originalText = this.textContent;
+                    this.textContent = '已复制！';
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 1000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
