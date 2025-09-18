@@ -307,14 +307,55 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         `;
         
+        // 添加拖动选择支持
+        let isDragging = false;
+        let startX, startY;
+        
+        noteCard.addEventListener('mousedown', (e) => {
+          isDragging = false;
+          startX = e.clientX;
+          startY = e.clientY;
+        });
+        
+        noteCard.addEventListener('mousemove', (e) => {
+          if (startX !== undefined && startY !== undefined) {
+            const deltaX = Math.abs(e.clientX - startX);
+            const deltaY = Math.abs(e.clientY - startY);
+            // 如果鼠标移动超过5像素，认为是拖动
+            if (deltaX > 5 || deltaY > 5) {
+              isDragging = true;
+            }
+          }
+        });
+        
         // 点击查看完整内容
         noteCard.addEventListener('click', (e) => {
+          // 如果是拖动操作，不触发点击
+          if (isDragging) {
+            return;
+          }
+          
           // 如果点击的是链接，不触发模态框
           if (e.target.tagName === 'A' || e.target.classList.contains('note-link')) {
             e.stopPropagation();
             return;
           }
           showNoteModal(note);
+        });
+        
+        // 重置拖动状态
+        noteCard.addEventListener('mouseup', () => {
+          setTimeout(() => {
+            isDragging = false;
+            startX = undefined;
+            startY = undefined;
+          }, 10);
+        });
+        
+        noteCard.addEventListener('mouseleave', () => {
+          isDragging = false;
+          startX = undefined;
+          startY = undefined;
         });
         
         // 添加动画延迟
@@ -517,5 +558,213 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   `;
   document.head.appendChild(style);
+  
+  // 云端同步功能
+  console.log('🚀 开始初始化云端同步功能...');
+  
+  const cloudModal = document.getElementById('cloudModal');
+  const cloudSyncBtn = document.getElementById('cloudSyncBtn');
+  const closeCloudModalBtn = document.getElementById('closeCloudModal');
+  const cloudLoginBtn = document.getElementById('cloudLoginBtn');
+  const cloudDownloadBtn = document.getElementById('cloudDownloadBtn');
+  const cancelCloudBtn = document.getElementById('cancelCloudBtn');
+  const cloudUsername = document.getElementById('cloudUsername');
+  const cloudPassword = document.getElementById('cloudPassword');
+  const cloudStatus = document.getElementById('cloudStatus');
+  
+  console.log('📋 DOM元素获取结果:');
+  console.log('cloudModal:', cloudModal);
+  console.log('cloudSyncBtn:', cloudSyncBtn);
+  console.log('closeCloudModalBtn:', closeCloudModalBtn);
+  console.log('cloudLoginBtn:', cloudLoginBtn);
+  
+  if (!cloudSyncBtn) {
+    console.error('❌ 云端按钮元素未找到！请检查HTML中是否存在id="cloudSyncBtn"的元素');
+    return;
+  }
+  
+  console.log('✅ 所有云端元素获取成功，准备绑定事件监听器...');
+  
+  const CLOUD_SERVER = 'http://43.143.90.251:8013';
+  
+  // 获取本地笔记的辅助函数
+  async function getNotes() {
+    try {
+      const result = await chrome.storage.sync.get(['notes']);
+      return result.notes || [];
+    } catch (error) {
+      console.error('获取本地笔记失败:', error);
+      return [];
+    }
+  }
+  
+  // 显示云端状态
+  function showCloudStatus(message, type = 'loading') {
+    cloudStatus.textContent = message;
+    cloudStatus.className = `cloud-status ${type}`;
+    cloudStatus.style.display = 'block';
+  }
+  
+  // 隐藏云端状态
+  function hideCloudStatus() {
+    cloudStatus.style.display = 'none';
+  }
+  
+  // 云端同步按钮点击
+  cloudSyncBtn.addEventListener('click', () => {
+    console.log('🔥 云端按钮被点击了！');
+    console.log('cloudModal元素:', cloudModal);
+    console.log('cloudSyncBtn元素:', cloudSyncBtn);
+    
+    cloudModal.classList.add('active');
+    hideCloudStatus();
+    cloudUsername.value = '';
+    cloudPassword.value = '';
+    cloudUsername.focus();
+    
+    console.log('✅ 模态框应该已经显示，添加了active类');
+  });
+  
+  // 关闭云端模态框
+  function closeCloudModal() {
+    cloudModal.classList.remove('active');
+    hideCloudStatus();
+  }
+  
+  closeCloudModalBtn.addEventListener('click', closeCloudModal);
+  cancelCloudBtn.addEventListener('click', closeCloudModal);
+  
+  // 点击模态框外部关闭
+  cloudModal.addEventListener('click', (e) => {
+    if (e.target === cloudModal) {
+      closeCloudModal();
+    }
+  });
+  
+  // 云端登录并同步
+  cloudLoginBtn.addEventListener('click', async () => {
+    const username = cloudUsername.value.trim();
+    const password = cloudPassword.value.trim();
+    
+    if (!username || !password) {
+      showCloudStatus('请输入用户名和密码', 'error');
+      return;
+    }
+    
+    try {
+      showCloudStatus('正在登录...', 'loading');
+      
+      // 登录
+      const loginResponse = await fetch(`${CLOUD_SERVER}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+      
+      const loginResult = await loginResponse.json();
+      
+      if (!loginResult.success) {
+        showCloudStatus(loginResult.message, 'error');
+        return;
+      }
+      
+      showCloudStatus('登录成功，正在同步笔记...', 'loading');
+      
+      // 上传本地笔记到云端
+      const localNotes = await getNotes();
+      const syncResponse = await fetch(`${CLOUD_SERVER}/api/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username,
+          notes: localNotes,
+          action: 'upload'
+        })
+      });
+      
+      const syncResult = await syncResponse.json();
+      
+      if (syncResult.success) {
+        showCloudStatus(`同步成功！已上传 ${syncResult.count} 条笔记`, 'success');
+        showStatus(`云端同步成功！已上传 ${syncResult.count} 条笔记`);
+        
+        // 3秒后关闭模态框
+        setTimeout(() => {
+          closeCloudModal();
+        }, 3000);
+      } else {
+        showCloudStatus(syncResult.message, 'error');
+      }
+      
+    } catch (error) {
+      console.error('云端同步失败:', error);
+      showCloudStatus('网络连接失败，请检查服务器状态', 'error');
+    }
+  });
+  
+  // 下载笔记按钮点击
+  cloudDownloadBtn.addEventListener('click', async () => {
+    const username = cloudUsername.value.trim();
+    const password = cloudPassword.value.trim();
+    
+    if (!username || !password) {
+      showCloudStatus('请输入用户名和密码', 'error');
+      return;
+    }
+    
+    try {
+      showCloudStatus('正在登录...', 'loading');
+      
+      // 从云端下载笔记
+      const downloadResponse = await fetch(`${CLOUD_SERVER}/api/download`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+      
+      const downloadResult = await downloadResponse.json();
+      
+      if (!downloadResult.success) {
+        showCloudStatus(downloadResult.message, 'error');
+        return;
+      }
+      
+      showCloudStatus('正在保存到本地...', 'loading');
+      
+      // 保存到本地Chrome存储
+      if (downloadResult.notes && downloadResult.notes.length > 0) {
+        await chrome.storage.sync.set({ notes: downloadResult.notes });
+        showCloudStatus(`下载成功！已恢复 ${downloadResult.count} 条笔记`, 'success');
+        showStatus(`云端下载成功！已恢复 ${downloadResult.count} 条笔记`);
+        
+        // 刷新笔记列表
+        loadNotes();
+      } else {
+        showCloudStatus('云端暂无笔记数据', 'success');
+      }
+      
+      // 3秒后关闭模态框
+      setTimeout(() => {
+        closeCloudModal();
+      }, 3000);
+      
+    } catch (error) {
+      console.error('云端下载失败:', error);
+      showCloudStatus('网络连接失败，请检查服务器状态', 'error');
+    }
+  });
+  
+  // 回车键登录
+  cloudPassword.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      cloudLoginBtn.click();
+    }
+  });
   
 });
