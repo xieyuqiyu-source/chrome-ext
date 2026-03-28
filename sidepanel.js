@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
         clearAllNotes: document.getElementById("clearAllNotes"),
         searchInput: document.getElementById("searchInput"),
         notesList: document.getElementById("notesList"),
-        noteCount: document.getElementById("noteCount"),
         totalNotesMetric: document.getElementById("totalNotesMetric"),
         charCountMetric: document.getElementById("charCountMetric"),
         activeDaysMetric: document.getElementById("activeDaysMetric"),
@@ -20,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
         lastUpdatedMetric: document.getElementById("lastUpdatedMetric"),
         storageMetric: document.getElementById("storageMetric"),
         longNotesMetric: document.getElementById("longNotesMetric"),
-        syncPercentMetric: document.getElementById("syncPercentMetric"),
         activityGrid: document.getElementById("activityGrid"),
         status: document.getElementById("status"),
         noteModal: document.getElementById("noteModal"),
@@ -155,7 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.lastUpdatedMetric.textContent = latest ? formatRelativeTime(latest.updatedAt) : "暂无";
         elements.storageMetric.textContent = `${(estimatedBytes / 1024).toFixed(1)} KB`;
         elements.longNotesMetric.textContent = `${longNotes} 条`;
-        elements.syncPercentMetric.textContent = notes.length ? "100%" : "0%";
 
         renderActivityGrid(series);
     }
@@ -288,7 +285,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderNotes() {
         const notes = getFilteredNotes();
-        elements.noteCount.textContent = `${state.notes.length} 条笔记`;
         renderDashboard(state.notes, notes.length);
 
         if (!notes.length) {
@@ -316,9 +312,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
             head.append(badge, updated);
 
+            const lines = note.content.trim().split("\n");
+            const titleText = lines[0] || "无内容";
+            const bodyText = lines.slice(1).join("\n").trim();
+
+            const title = document.createElement("h3");
+            title.className = "note-title";
+            title.textContent = titleText;
+
             const preview = document.createElement("div");
             preview.className = "note-preview";
-            fillMultilineContent(preview, note.content);
+            if (bodyText) {
+                fillMultilineContent(preview, bodyText);
+            } else {
+                preview.style.display = "none";
+            }
 
             const footer = document.createElement("div");
             footer.className = "note-footer";
@@ -332,7 +340,7 @@ document.addEventListener("DOMContentLoaded", () => {
             action.textContent = "查看详情";
 
             footer.append(meta, action);
-            card.append(head, preview, footer);
+            card.append(head, title, preview, footer);
             fragment.appendChild(card);
         });
 

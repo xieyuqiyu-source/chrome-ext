@@ -16,6 +16,15 @@
             </div>
         </header>
 
+        <section class="panel panel-compact search-panel">
+            <label class="search-field" for="searchInput">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10.5 4a6.5 6.5 0 1 0 4.03 11.6l4.44 4.44 1.06-1.06-4.44-4.44A6.5 6.5 0 0 0 10.5 4Zm0 1.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/>
+                </svg>
+                <input id="searchInput" type="search" placeholder="搜索关键词，或直接输入新建...">
+            </label>
+        </section>
+
         <section class="panel panel-monitor">
             <div class="monitor-header">
                 <div class="monitor-score">
@@ -66,40 +75,6 @@
                     <strong id="longNotesMetric">0 条</strong>
                 </div>
             </div>
-        </section>
-
-        <section class="metrics-row">
-            <article class="panel panel-compact">
-                <div class="compact-head">
-                    <span>筛选与搜索</span>
-                    <span class="badge badge-success">SYNC</span>
-                </div>
-                <label class="search-field" for="searchInput">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M10.5 4a6.5 6.5 0 1 0 4.03 11.6l4.44 4.44 1.06-1.06-4.44-4.44A6.5 6.5 0 0 0 10.5 4Zm0 1.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/>
-                    </svg>
-                    <input id="searchInput" type="search" placeholder="搜索正文、链接、关键词">
-                </label>
-                <p class="compact-copy">当前扩展只依赖 <code>chrome.storage.sync</code>，不需要额外登录。</p>
-            </article>
-
-            <article class="panel panel-compact ring-panel">
-                <div class="compact-head">
-                    <span>同步概况</span>
-                    <span class="badge">PROFILE</span>
-                </div>
-                <div class="ring-layout">
-                    <div class="sync-copy">
-                        <span class="compact-number" id="syncPercentMetric">100%</span>
-                        <p>同账号多设备可用。Chrome 负责同步时机。</p>
-                    </div>
-                    <div class="ring" aria-hidden="true">
-                        <div class="ring-inner">
-                            <span id="noteCount">0 条笔记</span>
-                        </div>
-                    </div>
-                </div>
-            </article>
         </section>
 
         <section class="panel composer is-hidden" id="composerCard">
