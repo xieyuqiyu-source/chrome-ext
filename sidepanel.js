@@ -1,770 +1,569 @@
-// sidepanel.js - 优雅的侧边栏笔记管理
-document.addEventListener('DOMContentLoaded', function() {
-  
-  // 获取DOM元素
-  const noteInput = document.getElementById('noteInput');
-  const notesList = document.getElementById('notesList');
-  const noteCount = document.getElementById('noteCount');
-  const statusDiv = document.getElementById('status');
-  const writeSection = document.getElementById('writeSection');
-  const addNoteBtn = document.getElementById('addNoteBtn');
-  const cancelWriteBtn = document.getElementById('cancelWrite');
-  const noteModal = document.getElementById('noteModal');
-  const modalText = document.getElementById('modalText');
-  const modalTime = document.getElementById('modalTime');
-  const closeModalBtn = document.getElementById('closeModal');
-  const editModal = document.getElementById('editModal');
-  const editInput = document.getElementById('editInput');
-  const editModalTime = document.getElementById('editModalTime');
-  const closeEditModalBtn = document.getElementById('closeEditModal');
-  const editNoteBtn = document.getElementById('editNoteBtn');
-  const deleteNoteBtn = document.getElementById('deleteNoteBtn');
-  const saveEditBtn = document.getElementById('saveEditBtn');
-  const cancelEditBtn = document.getElementById('cancelEditBtn');
-  
-  let currentEditingNote = null; // 当前正在编辑的笔记
-  
-  // 显示状态消息
-  function showStatus(message, isError = false) {
-    statusDiv.textContent = message;
-    statusDiv.className = `status ${isError ? 'error' : 'success'} show`;
-    setTimeout(() => {
-      statusDiv.classList.remove('show');
-    }, 3000);
-  }
-  
-  // 生成唯一ID
-  function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-  }
-  
-  // 格式化时间
-  function formatTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
-    
-    if (diff < 60000) { // 1分钟内
-      return '刚刚';
-    } else if (diff < 3600000) { // 1小时内
-      return `${Math.floor(diff / 60000)}分钟前`;
-    } else if (diff < 86400000) { // 24小时内
-      return `${Math.floor(diff / 3600000)}小时前`;
-    } else {
-      return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
-    }
-  }
-  
-  // URL识别和链接化功能
-  function linkifyText(text) {
-    // 更精确的URL正则表达式
-    const urlRegex = /(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+)/gi;
-    
-    return text.replace(urlRegex, function(url) {
-      let href = url;
-      // 如果URL不包含协议，添加https://
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        href = 'https://' + url;
-      }
-      
-      // 创建简洁的可点击链接
-      return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="note-link">${url}</a>`;
-    });
-  }
-  
-  // 安全地处理HTML内容 - 先处理URL链接，再转义其他内容
-  function formatTextWithLinks(text) {
-    // 先处理URL链接（在转义之前）
-    const withLinks = linkifyText(text);
-    
-    // 处理换行符
-    return withLinks.replace(/\n/g, '<br>');
-  }
-  
-  // 显示写笔记界面
-  function showWriteSection() {
-    // 添加隐藏动画到按钮
-    addNoteBtn.classList.add('hiding');
-    
-    // 延迟显示写作区域，确保按钮动画完成
-    setTimeout(() => {
-      addNoteBtn.style.display = 'none';
-      writeSection.classList.add('active');
-      
-      // 再延迟一点聚焦输入框，确保动画流畅
-      setTimeout(() => {
-        noteInput.focus();
-      }, 200);
-    }, 150);
-  }
-  
-  // 隐藏写笔记界面
-  function hideWriteSection() {
-    writeSection.classList.remove('active');
-    
-    setTimeout(() => {
-      addNoteBtn.style.display = 'block';
-      addNoteBtn.classList.remove('hiding');
-      noteInput.value = '';
-    }, 200);
-  }
-  
-  // 显示笔记详情弹窗
-  function showNoteModal(note) {
-    currentEditingNote = note; // 保存当前查看的笔记
-    // 使用 innerHTML 而不是 textContent 来支持链接
-    modalText.innerHTML = formatTextWithLinks(note.content);
-    modalTime.textContent = `创建时间：${new Date(note.timestamp).toLocaleString('zh-CN')}`;
-    noteModal.classList.add('active');
-  }
-  
-  // 隐藏笔记详情弹窗
-  function hideNoteModal() {
-    noteModal.classList.remove('active');
-    currentEditingNote = null;
-  }
+document.addEventListener("DOMContentLoaded", () => {
+    const STORAGE_KEY = "notes";
+    const elements = {
+        toggleComposer: document.getElementById("toggleComposer"),
+        composerCard: document.getElementById("composerCard"),
+        noteInput: document.getElementById("noteInput"),
+        saveNote: document.getElementById("saveNote"),
+        cancelComposer: document.getElementById("cancelComposer"),
+        exportNotes: document.getElementById("exportNotes"),
+        clearAllNotes: document.getElementById("clearAllNotes"),
+        searchInput: document.getElementById("searchInput"),
+        notesList: document.getElementById("notesList"),
+        noteCount: document.getElementById("noteCount"),
+        totalNotesMetric: document.getElementById("totalNotesMetric"),
+        charCountMetric: document.getElementById("charCountMetric"),
+        activeDaysMetric: document.getElementById("activeDaysMetric"),
+        avgLengthMetric: document.getElementById("avgLengthMetric"),
+        visibleNotesMetric: document.getElementById("visibleNotesMetric"),
+        streakMetric: document.getElementById("streakMetric"),
+        lastUpdatedMetric: document.getElementById("lastUpdatedMetric"),
+        storageMetric: document.getElementById("storageMetric"),
+        longNotesMetric: document.getElementById("longNotesMetric"),
+        syncPercentMetric: document.getElementById("syncPercentMetric"),
+        activityGrid: document.getElementById("activityGrid"),
+        status: document.getElementById("status"),
+        noteModal: document.getElementById("noteModal"),
+        closeModal: document.getElementById("closeModal"),
+        modalTime: document.getElementById("modalTime"),
+        modalBody: document.getElementById("modalBody"),
+        editInput: document.getElementById("editInput"),
+        editToggleBtn: document.getElementById("editToggleBtn"),
+        saveEditBtn: document.getElementById("saveEditBtn"),
+        cancelEditBtn: document.getElementById("cancelEditBtn"),
+        deleteNoteBtn: document.getElementById("deleteNoteBtn")
+    };
 
-  // 显示编辑弹窗
-  function showEditModal(note) {
-    // 先保存要编辑的笔记
-    currentEditingNote = note;
-    editInput.value = note.content;
-    editModalTime.textContent = `创建时间：${new Date(note.timestamp).toLocaleString('zh-CN')}`;
-    
-    // 关闭查看弹窗但不清空 currentEditingNote
-    noteModal.classList.remove('active');
-    
-    setTimeout(() => {
-      editModal.classList.add('active');
-      editInput.focus();
-    }, 300);
-  }
-  
-  // 隐藏编辑弹窗
-  function hideEditModal() {
-    editModal.classList.remove('active');
-    currentEditingNote = null;
-    editInput.value = '';
-  }
+    const state = {
+        notes: [],
+        filter: "",
+        activeNoteId: null,
+        isEditingModal: false,
+        toastTimer: null
+    };
 
-  // 保存编辑后的笔记
-  async function saveEditedNote() {
-    if (!currentEditingNote) {
-      showStatus('❌ 没有要编辑的笔记', true);
-      return;
+    function showToast(message, isError = false) {
+        window.clearTimeout(state.toastTimer);
+        elements.status.textContent = message;
+        elements.status.classList.add("is-visible");
+        elements.status.classList.toggle("is-error", isError);
+        state.toastTimer = window.setTimeout(() => {
+            elements.status.classList.remove("is-visible", "is-error");
+        }, 2400);
     }
-    
-    const newContent = editInput.value.trim();
-    if (!newContent) {
-      showStatus('请输入笔记内容', true);
-      editInput.focus();
-      return;
-    }
-    
-    try {
-      const result = await chrome.storage.sync.get(['notes']);
-      const notes = result.notes || [];
-      
-      // 找到要编辑的笔记并更新
-      const noteIndex = notes.findIndex(note => note.id === currentEditingNote.id);
-      if (noteIndex !== -1) {
-        notes[noteIndex] = {
-          ...notes[noteIndex],
-          content: newContent,
-          preview: newContent.substring(0, 100) + (newContent.length > 100 ? '...' : ''),
-          lastModified: Date.now()
-        };
-        
-        // 保存到存储
-        await chrome.storage.sync.set({ notes: notes });
-        
-        // 隐藏编辑弹窗
-        hideEditModal();
-        
-        // 刷新列表
-        await loadNotes();
-        
-        showStatus('✏️ 笔记已更新');
-      } else {
-        showStatus('❌ 找不到要编辑的笔记', true);
-      }
-      
-    } catch (error) {
-      showStatus('❌ 更新失败: ' + error.message, true);
-    }
-  }
 
-  // 从模态框删除笔记
-  async function deleteCurrentNote() {
-    if (!currentEditingNote) return;
-    
-    if (!confirm('🗑️ 确定要删除这条笔记吗？')) {
-      return;
+    function generateId() {
+        return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     }
-    
-    try {
-      const result = await chrome.storage.sync.get(['notes']);
-      const notes = result.notes || [];
-      
-      // 过滤掉要删除的笔记
-      const filteredNotes = notes.filter(note => note.id !== currentEditingNote.id);
-      
-      // 保存更新后的列表
-      await chrome.storage.sync.set({ notes: filteredNotes });
-      
-      // 隐藏弹窗
-      hideNoteModal();
-      
-      // 刷新列表
-      await loadNotes();
-      
-      showStatus('🗑️ 笔记已删除');
-      
-    } catch (error) {
-      showStatus('❌ 删除失败: ' + error.message, true);
+
+    function formatDateTime(timestamp) {
+        return new Intl.DateTimeFormat("zh-CN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+        }).format(new Date(timestamp));
     }
-  }
-  
-  // 保存笔记
-  async function saveNote() {
-    const content = noteInput.value.trim();
-    if (!content) {
-      showStatus('请输入笔记内容', true);
-      noteInput.focus();
-      return;
+
+    function formatRelativeTime(timestamp) {
+        const diff = Date.now() - timestamp;
+        if (diff < 60_000) return "刚刚";
+        if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
+        if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`;
+        if (diff < 7 * 86_400_000) return `${Math.floor(diff / 86_400_000)} 天前`;
+        return formatDateTime(timestamp);
     }
-    
-    try {
-      // 获取现有笔记
-      const result = await chrome.storage.sync.get(['notes']);
-      const notes = result.notes || [];
-      
-      // 创建新笔记
-      const newNote = {
-        id: generateId(),
-        content: content,
-        timestamp: Date.now(),
-        preview: content.substring(0, 100) + (content.length > 100 ? '...' : '')
-      };
-      
-      // 添加到开头
-      notes.unshift(newNote);
-      
-      // 保存到存储
-      await chrome.storage.sync.set({ notes: notes });
-      
-      // 隐藏写笔记界面
-      hideWriteSection();
-      
-      // 刷新列表
-      await loadNotes();
-      
-      showStatus(`✨ 笔记已保存！共 ${notes.length} 条`);
-      
-    } catch (error) {
-      showStatus('❌ 保存失败: ' + error.message, true);
+
+    function formatCompactNumber(value) {
+        if (value >= 10_000) {
+            return `${(value / 10_000).toFixed(1)}w`;
+        }
+        return `${value}`;
     }
-  }
-  
-  // 加载笔记列表
-  async function loadNotes() {
-    try {
-      const result = await chrome.storage.sync.get(['notes']);
-      const notes = result.notes || [];
-      
-      // 更新计数
-      noteCount.textContent = `${notes.length} 条笔记`;
-      
-      // 清空列表
-      notesList.innerHTML = '';
-      
-      if (notes.length === 0) {
-        notesList.innerHTML = `
-          <div class="empty-state">
-            <span class="emoji">📝</span>
-            <h3>还没有笔记</h3>
-            <p>点击上方按钮开始记录你的想法吧！</p>
-          </div>
-        `;
-        return;
-      }
-      
-      // 显示笔记卡片
-      notes.forEach((note, index) => {
-        const noteCard = document.createElement('div');
-        noteCard.className = 'note-card';
-        
-        // 格式化时间显示
-        const timeText = note.lastModified ? 
-          `📝 ${formatTime(note.lastModified)} (已编辑)` : 
-          `🕒 ${formatTime(note.timestamp)}`;
-        
-        noteCard.innerHTML = `
-          <div class="note-preview">${formatTextWithLinks(note.preview || note.content)}</div>
-          <div class="note-meta">
-            <span class="note-time">${timeText}</span>
-            <span class="note-actions">点击查看</span>
-          </div>
-        `;
-        
-        // 添加拖动选择支持
-        let isDragging = false;
-        let startX, startY;
-        
-        noteCard.addEventListener('mousedown', (e) => {
-          isDragging = false;
-          startX = e.clientX;
-          startY = e.clientY;
+
+    function buildActivitySeries(notes, days = 48) {
+        const dayMap = new Map();
+        notes.forEach((note) => {
+            const date = new Date(note.updatedAt);
+            const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+            dayMap.set(key, (dayMap.get(key) || 0) + 1);
         });
-        
-        noteCard.addEventListener('mousemove', (e) => {
-          if (startX !== undefined && startY !== undefined) {
-            const deltaX = Math.abs(e.clientX - startX);
-            const deltaY = Math.abs(e.clientY - startY);
-            // 如果鼠标移动超过5像素，认为是拖动
-            if (deltaX > 5 || deltaY > 5) {
-              isDragging = true;
+
+        const series = [];
+        for (let offset = days - 1; offset >= 0; offset -= 1) {
+            const date = new Date();
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() - offset);
+            const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+            series.push(dayMap.get(key) || 0);
+        }
+        return series;
+    }
+
+    function calculateStreak(series) {
+        let streak = 0;
+        for (let index = series.length - 1; index >= 0; index -= 1) {
+            if (series[index] > 0) {
+                streak += 1;
+            } else {
+                break;
             }
-          }
+        }
+        return streak;
+    }
+
+    function renderActivityGrid(series) {
+        elements.activityGrid.replaceChildren();
+        const max = Math.max(...series, 1);
+
+        series.forEach((count) => {
+            const cell = document.createElement("span");
+            cell.className = "activity-cell";
+            let level = 0;
+
+            if (count > 0) {
+                const ratio = count / max;
+                if (ratio >= 0.9) level = 4;
+                else if (ratio >= 0.55) level = 3;
+                else if (ratio >= 0.25) level = 2;
+                else level = 1;
+                cell.classList.add(`level-${level}`);
+            }
+
+            cell.title = count > 0 ? `${count} 条更新` : "无更新";
+            elements.activityGrid.appendChild(cell);
         });
-        
-        // 点击查看完整内容
-        noteCard.addEventListener('click', (e) => {
-          // 如果是拖动操作，不触发点击
-          if (isDragging) {
+    }
+
+    function renderDashboard(notes, visibleNotes) {
+        const totalChars = notes.reduce((sum, note) => sum + note.content.length, 0);
+        const avgLength = notes.length ? Math.round(totalChars / notes.length) : 0;
+        const longNotes = notes.filter((note) => note.content.length >= 140).length;
+        const series = buildActivitySeries(notes);
+        const activeDays = series.filter((count) => count > 0).length;
+        const streak = calculateStreak(series);
+        const latest = notes[0];
+        const estimatedBytes = new Blob([JSON.stringify(notes)]).size;
+
+        elements.totalNotesMetric.textContent = `${notes.length}`;
+        elements.charCountMetric.textContent = formatCompactNumber(totalChars);
+        elements.activeDaysMetric.textContent = `${activeDays} / 48`;
+        elements.avgLengthMetric.textContent = `${avgLength} 字`;
+        elements.visibleNotesMetric.textContent = `${visibleNotes}`;
+        elements.streakMetric.textContent = `${streak} 天`;
+        elements.lastUpdatedMetric.textContent = latest ? formatRelativeTime(latest.updatedAt) : "暂无";
+        elements.storageMetric.textContent = `${(estimatedBytes / 1024).toFixed(1)} KB`;
+        elements.longNotesMetric.textContent = `${longNotes} 条`;
+        elements.syncPercentMetric.textContent = notes.length ? "100%" : "0%";
+
+        renderActivityGrid(series);
+    }
+
+    function normalizeNote(note) {
+        const content = typeof note.content === "string" ? note.content.trim() : "";
+        return {
+            id: note.id || generateId(),
+            content,
+            createdAt: note.createdAt || note.timestamp || Date.now(),
+            updatedAt: note.updatedAt || note.lastModified || note.timestamp || Date.now()
+        };
+    }
+
+    function sortNotes(notes) {
+        return [...notes].sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+
+    async function readNotes() {
+        const stored = await chrome.storage.sync.get([STORAGE_KEY]);
+        const notes = Array.isArray(stored[STORAGE_KEY]) ? stored[STORAGE_KEY] : [];
+        return sortNotes(notes.map(normalizeNote).filter((note) => note.content));
+    }
+
+    async function persistNotes(notes) {
+        const payload = notes.map((note) => ({
+            id: note.id,
+            content: note.content,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt
+        }));
+        await chrome.storage.sync.set({ [STORAGE_KEY]: payload });
+    }
+
+    function openComposer() {
+        elements.composerCard.classList.remove("is-hidden");
+        elements.noteInput.focus();
+    }
+
+    function closeComposer() {
+        elements.composerCard.classList.add("is-hidden");
+        elements.noteInput.value = "";
+    }
+
+    function openModal(noteId) {
+        state.activeNoteId = noteId;
+        state.isEditingModal = false;
+        renderModal();
+        elements.noteModal.classList.add("is-open");
+        elements.noteModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal() {
+        elements.noteModal.classList.remove("is-open");
+        elements.noteModal.setAttribute("aria-hidden", "true");
+        elements.editInput.value = "";
+        state.activeNoteId = null;
+        state.isEditingModal = false;
+    }
+
+    function setModalEditing(isEditing) {
+        state.isEditingModal = isEditing;
+        elements.modalBody.classList.toggle("is-hidden", isEditing);
+        elements.editInput.classList.toggle("is-hidden", !isEditing);
+        elements.editToggleBtn.classList.toggle("is-hidden", isEditing);
+        elements.saveEditBtn.classList.toggle("is-hidden", !isEditing);
+        elements.cancelEditBtn.classList.toggle("is-hidden", !isEditing);
+        if (isEditing) {
+            elements.editInput.focus();
+        }
+    }
+
+    function createLinkedContent(text) {
+        const fragment = document.createDocumentFragment();
+        const regex = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+
+            const value = match[0];
+            const link = document.createElement("a");
+            link.textContent = value;
+            link.href = value.startsWith("http") ? value : `https://${value}`;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            fragment.appendChild(link);
+            lastIndex = match.index + value.length;
+        }
+
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        return fragment;
+    }
+
+    function fillMultilineContent(container, text) {
+        container.replaceChildren();
+        const lines = text.split("\n");
+        lines.forEach((line, index) => {
+            container.appendChild(createLinkedContent(line));
+            if (index < lines.length - 1) {
+                container.appendChild(document.createElement("br"));
+            }
+        });
+    }
+
+    function getFilteredNotes() {
+        const keyword = state.filter.trim().toLowerCase();
+        if (!keyword) return state.notes;
+        return state.notes.filter((note) => note.content.toLowerCase().includes(keyword));
+    }
+
+    function renderEmptyState(isFiltered = false) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "empty-state";
+        wrapper.innerHTML = `
+            <div class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 3.75A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25h12A2.25 2.25 0 0 0 20.25 18V8.56a2.25 2.25 0 0 0-.66-1.59l-2.56-2.56a2.25 2.25 0 0 0-1.6-.66H6Zm0 1.5h9.25v2.5c0 .97.78 1.75 1.75 1.75h2.5V18c0 .41-.34.75-.75.75H6a.75.75 0 0 1-.75-.75V6c0-.41.34-.75.75-.75Zm10.75 1.06 1.94 1.94H17a.25.25 0 0 1-.25-.25V6.31Z"/></svg>
+            </div>
+            <h3>${isFiltered ? "没有找到匹配内容" : "还没有任何笔记"}</h3>
+            <p class="empty-copy">${isFiltered ? "换个关键词试试，或者清空搜索框查看全部笔记。" : "从一条短记录开始。内容会保存在当前 Chrome 账号的同步存储中。"}</p>
+        `;
+        elements.notesList.replaceChildren(wrapper);
+    }
+
+    function renderNotes() {
+        const notes = getFilteredNotes();
+        elements.noteCount.textContent = `${state.notes.length} 条笔记`;
+        renderDashboard(state.notes, notes.length);
+
+        if (!notes.length) {
+            renderEmptyState(Boolean(state.filter.trim()));
             return;
-          }
-          
-          // 如果点击的是链接，不触发模态框
-          if (e.target.tagName === 'A' || e.target.classList.contains('note-link')) {
-            e.stopPropagation();
+        }
+
+        const fragment = document.createDocumentFragment();
+        notes.forEach((note) => {
+            const card = document.createElement("article");
+            card.className = "note-card";
+            card.tabIndex = 0;
+            card.dataset.id = note.id;
+
+            const head = document.createElement("div");
+            head.className = "note-head";
+
+            const badge = document.createElement("span");
+            badge.className = "badge badge-primary";
+            badge.textContent = formatRelativeTime(note.updatedAt);
+
+            const updated = document.createElement("span");
+            updated.className = "note-meta";
+            updated.textContent = note.updatedAt !== note.createdAt ? "已编辑" : "创建时间";
+
+            head.append(badge, updated);
+
+            const preview = document.createElement("div");
+            preview.className = "note-preview";
+            fillMultilineContent(preview, note.content);
+
+            const footer = document.createElement("div");
+            footer.className = "note-footer";
+
+            const meta = document.createElement("span");
+            meta.className = "note-meta";
+            meta.textContent = `最近更新 ${formatDateTime(note.updatedAt)}`;
+
+            const action = document.createElement("span");
+            action.className = "badge";
+            action.textContent = "查看详情";
+
+            footer.append(meta, action);
+            card.append(head, preview, footer);
+            fragment.appendChild(card);
+        });
+
+        elements.notesList.replaceChildren(fragment);
+    }
+
+    function renderModal() {
+        const note = state.notes.find((item) => item.id === state.activeNoteId);
+        if (!note) {
+            closeModal();
             return;
-          }
-          showNoteModal(note);
-        });
-        
-        // 重置拖动状态
-        noteCard.addEventListener('mouseup', () => {
-          setTimeout(() => {
-            isDragging = false;
-            startX = undefined;
-            startY = undefined;
-          }, 10);
-        });
-        
-        noteCard.addEventListener('mouseleave', () => {
-          isDragging = false;
-          startX = undefined;
-          startY = undefined;
-        });
-        
-        // 添加动画延迟
-        noteCard.style.animationDelay = `${index * 0.1}s`;
-        
-        notesList.appendChild(noteCard);
-      });
-      
-    } catch (error) {
-      showStatus('❌ 加载失败: ' + error.message, true);
-    }
-  }
-  
-  // 删除笔记
-  window.deleteNote = async function(noteId) {
-    if (!confirm('🗑️ 确定要删除这条笔记吗？')) {
-      return;
-    }
-    
-    try {
-      const result = await chrome.storage.sync.get(['notes']);
-      const notes = result.notes || [];
-      
-      // 过滤掉要删除的笔记
-      const filteredNotes = notes.filter(note => note.id !== noteId);
-      
-      // 保存更新后的列表
-      await chrome.storage.sync.set({ notes: filteredNotes });
-      
-      // 刷新列表
-      await loadNotes();
-      
-      showStatus('🗑️ 笔记已删除');
-      
-    } catch (error) {
-      showStatus('❌ 删除失败: ' + error.message, true);
-    }
-  };
-  
-  // 清空所有笔记
-  async function clearAllNotes() {
-    if (!confirm('⚠️ 确定要删除所有笔记吗？此操作不可恢复！')) {
-      return;
-    }
-    
-    try {
-      await chrome.storage.sync.set({ notes: [] });
-      await loadNotes();
-      showStatus('🗑️ 所有笔记已删除');
-    } catch (error) {
-      showStatus('❌ 清空失败: ' + error.message, true);
-    }
-  }
-  
-  // 导出笔记
-  async function exportNotes() {
-    try {
-      const result = await chrome.storage.sync.get(['notes']);
-      const notes = result.notes || [];
-      
-      if (notes.length === 0) {
-        showStatus('❌ 没有笔记可以导出', true);
-        return;
-      }
-      
-      // 格式化笔记内容
-      let exportText = `📝 我的笔记 - 导出于 ${new Date().toLocaleString('zh-CN')}\n`;
-      exportText += '='.repeat(50) + '\n\n';
-      
-      notes.forEach((note, index) => {
-        exportText += `📄 笔记 ${index + 1}\n`;
-        exportText += `🕒 时间: ${new Date(note.timestamp).toLocaleString('zh-CN')}\n`;
-        exportText += `📝 内容:\n${note.content}\n`;
-        exportText += '-'.repeat(30) + '\n\n';
-      });
-      
-      // 复制到剪贴板
-      await navigator.clipboard.writeText(exportText);
-      showStatus(`📤 已复制 ${notes.length} 条笔记到剪贴板`);
-      
-    } catch (error) {
-      showStatus('❌ 导出失败: ' + error.message, true);
-    }
-  }
-  
-  // 绑定事件
-  addNoteBtn.addEventListener('click', showWriteSection);
-  cancelWriteBtn.addEventListener('click', hideWriteSection);
-  document.getElementById('saveNote').addEventListener('click', saveNote);
-  document.getElementById('exportNotes').addEventListener('click', exportNotes);
-  document.getElementById('clearAllNotes').addEventListener('click', clearAllNotes);
-  closeModalBtn.addEventListener('click', hideNoteModal);
-  closeEditModalBtn.addEventListener('click', hideEditModal);
-  editNoteBtn.addEventListener('click', () => {
-    if (currentEditingNote) {
-      showEditModal(currentEditingNote);
-    }
-  });
-  deleteNoteBtn.addEventListener('click', deleteCurrentNote);
-  cancelEditBtn.addEventListener('click', hideEditModal);
+        }
 
-  // 保存编辑按钮 - 使用直接绑定
-  document.getElementById('saveEditBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    saveEditedNote();
-  });
-  
-  // 点击弹窗外部关闭
-  noteModal.addEventListener('click', (e) => {
-    if (e.target === noteModal) {
-      hideNoteModal();
+        elements.modalTime.textContent = `创建于 ${formatDateTime(note.createdAt)} · 更新于 ${formatDateTime(note.updatedAt)}`;
+        fillMultilineContent(elements.modalBody, note.content);
+        elements.editInput.value = note.content;
+        setModalEditing(state.isEditingModal);
     }
-  });
 
-  editModal.addEventListener('click', (e) => {
-    if (e.target === editModal) {
-      hideEditModal();
+    async function refreshNotes() {
+        try {
+            state.notes = await readNotes();
+            renderNotes();
+            if (state.activeNoteId) {
+                renderModal();
+            }
+        } catch (error) {
+            showToast(`加载失败：${error.message}`, true);
+        }
     }
-  });
-  
-  // 键盘快捷键
-  noteInput.addEventListener('keydown', (e) => {
-    // Ctrl+Enter 保存
-    if (e.ctrlKey && e.key === 'Enter') {
-      e.preventDefault();
-      saveNote();
-    }
-    // Esc 取消
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      hideWriteSection();
-    }
-  });
 
-  // 编辑框快捷键
-  editInput.addEventListener('keydown', (e) => {
-    // Ctrl+Enter 保存编辑
-    if (e.ctrlKey && e.key === 'Enter') {
-      e.preventDefault();
-      saveEditedNote();
+    async function handleCreateNote() {
+        const content = elements.noteInput.value.trim();
+        if (!content) {
+            showToast("请输入笔记内容", true);
+            elements.noteInput.focus();
+            return;
+        }
+
+        const now = Date.now();
+        const note = {
+            id: generateId(),
+            content,
+            createdAt: now,
+            updatedAt: now
+        };
+
+        try {
+            const nextNotes = sortNotes([note, ...state.notes]);
+            await persistNotes(nextNotes);
+            closeComposer();
+            await refreshNotes();
+            showToast("笔记已保存");
+        } catch (error) {
+            showToast(`保存失败：${error.message}`, true);
+        }
     }
-    // Esc 取消编辑
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      hideEditModal();
+
+    async function handleSaveEdit() {
+        const nextContent = elements.editInput.value.trim();
+        if (!nextContent) {
+            showToast("笔记内容不能为空", true);
+            elements.editInput.focus();
+            return;
+        }
+
+        const note = state.notes.find((item) => item.id === state.activeNoteId);
+        if (!note) {
+            showToast("当前笔记不存在", true);
+            return;
+        }
+
+        try {
+            const nextNotes = sortNotes(
+                state.notes.map((item) =>
+                    item.id === note.id
+                        ? { ...item, content: nextContent, updatedAt: Date.now() }
+                        : item
+                )
+            );
+            await persistNotes(nextNotes);
+            state.isEditingModal = false;
+            await refreshNotes();
+            showToast("笔记已更新");
+        } catch (error) {
+            showToast(`更新失败：${error.message}`, true);
+        }
     }
-  });
-  
-  // 全局键盘事件
-  document.addEventListener('keydown', (e) => {
-    // Esc 关闭弹窗
-    if (e.key === 'Escape') {
-      if (editModal.classList.contains('active')) {
-        hideEditModal();
-      } else if (noteModal.classList.contains('active')) {
-        hideNoteModal();
-      }
+
+    async function handleDeleteNote() {
+        const note = state.notes.find((item) => item.id === state.activeNoteId);
+        if (!note) return;
+        if (!window.confirm("确定删除这条笔记？此操作不可恢复。")) return;
+
+        try {
+            const nextNotes = state.notes.filter((item) => item.id !== note.id);
+            await persistNotes(nextNotes);
+            closeModal();
+            await refreshNotes();
+            showToast("笔记已删除");
+        } catch (error) {
+            showToast(`删除失败：${error.message}`, true);
+        }
     }
-    // Ctrl+N 新建笔记
-    if (e.ctrlKey && e.key === 'n' && !writeSection.classList.contains('active') && !noteModal.classList.contains('active') && !editModal.classList.contains('active')) {
-      e.preventDefault();
-      showWriteSection();
+
+    async function handleClearAllNotes() {
+        if (!state.notes.length) {
+            showToast("当前没有可清空的笔记", true);
+            return;
+        }
+        if (!window.confirm("确定清空全部笔记？此操作不可恢复。")) return;
+
+        try {
+            await persistNotes([]);
+            closeModal();
+            await refreshNotes();
+            showToast("全部笔记已清空");
+        } catch (error) {
+            showToast(`清空失败：${error.message}`, true);
+        }
     }
-  });
-  
-  // 页面加载时自动加载笔记
-  loadNotes();
-  
-  // 调试：检查关键元素
-  console.log('DOM 加载完成，检查元素:');
-  console.log('saveEditBtn:', saveEditBtn);
-  console.log('editInput:', editInput);
-  console.log('editModal:', editModal);
-  
-  // 确保事件绑定成功
-  if (!saveEditBtn) {
-    console.error('保存编辑按钮未找到！');
-  }
-  if (!editInput) {
-    console.error('编辑输入框未找到！');
-  }
-  
-  // 添加卡片进入动画
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+
+    async function handleExportNotes() {
+        if (!state.notes.length) {
+            showToast("没有可导出的笔记", true);
+            return;
+        }
+
+        const exportText = state.notes
+            .map((note, index) => {
+                return [
+                    `# 笔记 ${index + 1}`,
+                    `创建时间：${formatDateTime(note.createdAt)}`,
+                    `更新时间：${formatDateTime(note.updatedAt)}`,
+                    "",
+                    note.content
+                ].join("\n");
+            })
+            .join("\n\n------------------------------\n\n");
+
+        try {
+            await navigator.clipboard.writeText(exportText);
+            showToast(`已复制 ${state.notes.length} 条笔记到剪贴板`);
+        } catch (error) {
+            showToast(`导出失败：${error.message}`, true);
+        }
     }
-    
-    .note-card {
-      animation: fadeInUp 0.5s ease forwards;
-    }
-  `;
-  document.head.appendChild(style);
-  
-  // 云端同步功能
-  console.log('🚀 开始初始化云端同步功能...');
-  
-  const cloudModal = document.getElementById('cloudModal');
-  const cloudSyncBtn = document.getElementById('cloudSyncBtn');
-  const closeCloudModalBtn = document.getElementById('closeCloudModal');
-  const cloudLoginBtn = document.getElementById('cloudLoginBtn');
-  const cloudDownloadBtn = document.getElementById('cloudDownloadBtn');
-  const cancelCloudBtn = document.getElementById('cancelCloudBtn');
-  const cloudUsername = document.getElementById('cloudUsername');
-  const cloudPassword = document.getElementById('cloudPassword');
-  const cloudStatus = document.getElementById('cloudStatus');
-  
-  console.log('📋 DOM元素获取结果:');
-  console.log('cloudModal:', cloudModal);
-  console.log('cloudSyncBtn:', cloudSyncBtn);
-  console.log('closeCloudModalBtn:', closeCloudModalBtn);
-  console.log('cloudLoginBtn:', cloudLoginBtn);
-  
-  if (!cloudSyncBtn) {
-    console.error('❌ 云端按钮元素未找到！请检查HTML中是否存在id="cloudSyncBtn"的元素');
-    return;
-  }
-  
-  console.log('✅ 所有云端元素获取成功，准备绑定事件监听器...');
-  
-  const CLOUD_SERVER = 'http://43.143.90.251:8013';
-  
-  // 获取本地笔记的辅助函数
-  async function getNotes() {
-    try {
-      const result = await chrome.storage.sync.get(['notes']);
-      return result.notes || [];
-    } catch (error) {
-      console.error('获取本地笔记失败:', error);
-      return [];
-    }
-  }
-  
-  // 显示云端状态
-  function showCloudStatus(message, type = 'loading') {
-    cloudStatus.textContent = message;
-    cloudStatus.className = `cloud-status ${type}`;
-    cloudStatus.style.display = 'block';
-  }
-  
-  // 隐藏云端状态
-  function hideCloudStatus() {
-    cloudStatus.style.display = 'none';
-  }
-  
-  // 云端同步按钮点击
-  cloudSyncBtn.addEventListener('click', () => {
-    console.log('🔥 云端按钮被点击了！');
-    console.log('cloudModal元素:', cloudModal);
-    console.log('cloudSyncBtn元素:', cloudSyncBtn);
-    
-    cloudModal.classList.add('active');
-    hideCloudStatus();
-    cloudUsername.value = '';
-    cloudPassword.value = '';
-    cloudUsername.focus();
-    
-    console.log('✅ 模态框应该已经显示，添加了active类');
-  });
-  
-  // 关闭云端模态框
-  function closeCloudModal() {
-    cloudModal.classList.remove('active');
-    hideCloudStatus();
-  }
-  
-  closeCloudModalBtn.addEventListener('click', closeCloudModal);
-  cancelCloudBtn.addEventListener('click', closeCloudModal);
-  
-  // 点击模态框外部关闭
-  cloudModal.addEventListener('click', (e) => {
-    if (e.target === cloudModal) {
-      closeCloudModal();
-    }
-  });
-  
-  // 云端登录并同步
-  cloudLoginBtn.addEventListener('click', async () => {
-    const username = cloudUsername.value.trim();
-    const password = cloudPassword.value.trim();
-    
-    if (!username || !password) {
-      showCloudStatus('请输入用户名和密码', 'error');
-      return;
-    }
-    
-    try {
-      showCloudStatus('正在登录...', 'loading');
-      
-      // 登录
-      const loginResponse = await fetch(`${CLOUD_SERVER}/api/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
-      
-      const loginResult = await loginResponse.json();
-      
-      if (!loginResult.success) {
-        showCloudStatus(loginResult.message, 'error');
-        return;
-      }
-      
-      showCloudStatus('登录成功，正在同步笔记...', 'loading');
-      
-      // 上传本地笔记到云端
-      const localNotes = await getNotes();
-      const syncResponse = await fetch(`${CLOUD_SERVER}/api/sync`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username,
-          notes: localNotes,
-          action: 'upload'
-        })
-      });
-      
-      const syncResult = await syncResponse.json();
-      
-      if (syncResult.success) {
-        showCloudStatus(`同步成功！已上传 ${syncResult.count} 条笔记`, 'success');
-        showStatus(`云端同步成功！已上传 ${syncResult.count} 条笔记`);
-        
-        // 3秒后关闭模态框
-        setTimeout(() => {
-          closeCloudModal();
-        }, 3000);
-      } else {
-        showCloudStatus(syncResult.message, 'error');
-      }
-      
-    } catch (error) {
-      console.error('云端同步失败:', error);
-      showCloudStatus('网络连接失败，请检查服务器状态', 'error');
-    }
-  });
-  
-  // 下载笔记按钮点击
-  cloudDownloadBtn.addEventListener('click', async () => {
-    const username = cloudUsername.value.trim();
-    const password = cloudPassword.value.trim();
-    
-    if (!username || !password) {
-      showCloudStatus('请输入用户名和密码', 'error');
-      return;
-    }
-    
-    try {
-      showCloudStatus('正在登录...', 'loading');
-      
-      // 从云端下载笔记
-      const downloadResponse = await fetch(`${CLOUD_SERVER}/api/download`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
-      
-      const downloadResult = await downloadResponse.json();
-      
-      if (!downloadResult.success) {
-        showCloudStatus(downloadResult.message, 'error');
-        return;
-      }
-      
-      showCloudStatus('正在保存到本地...', 'loading');
-      
-      // 保存到本地Chrome存储
-      if (downloadResult.notes && downloadResult.notes.length > 0) {
-        await chrome.storage.sync.set({ notes: downloadResult.notes });
-        showCloudStatus(`下载成功！已恢复 ${downloadResult.count} 条笔记`, 'success');
-        showStatus(`云端下载成功！已恢复 ${downloadResult.count} 条笔记`);
-        
-        // 刷新笔记列表
-        loadNotes();
-      } else {
-        showCloudStatus('云端暂无笔记数据', 'success');
-      }
-      
-      // 3秒后关闭模态框
-      setTimeout(() => {
-        closeCloudModal();
-      }, 3000);
-      
-    } catch (error) {
-      console.error('云端下载失败:', error);
-      showCloudStatus('网络连接失败，请检查服务器状态', 'error');
-    }
-  });
-  
-  // 回车键登录
-  cloudPassword.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      cloudLoginBtn.click();
-    }
-  });
-  
+
+    elements.toggleComposer.addEventListener("click", openComposer);
+    elements.cancelComposer.addEventListener("click", closeComposer);
+    elements.saveNote.addEventListener("click", handleCreateNote);
+    elements.exportNotes.addEventListener("click", handleExportNotes);
+    elements.clearAllNotes.addEventListener("click", handleClearAllNotes);
+    elements.searchInput.addEventListener("input", (event) => {
+        state.filter = event.target.value;
+        renderNotes();
+    });
+
+    elements.notesList.addEventListener("click", (event) => {
+        if (event.target.closest("a")) {
+            return;
+        }
+        const card = event.target.closest(".note-card");
+        if (!card) return;
+        openModal(card.dataset.id);
+    });
+
+    elements.notesList.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const card = event.target.closest(".note-card");
+        if (!card) return;
+        event.preventDefault();
+        openModal(card.dataset.id);
+    });
+
+    elements.closeModal.addEventListener("click", closeModal);
+    elements.noteModal.addEventListener("click", (event) => {
+        if (event.target === elements.noteModal) {
+            closeModal();
+        }
+    });
+
+    elements.editToggleBtn.addEventListener("click", () => {
+        state.isEditingModal = true;
+        renderModal();
+    });
+
+    elements.cancelEditBtn.addEventListener("click", () => {
+        state.isEditingModal = false;
+        renderModal();
+    });
+
+    elements.saveEditBtn.addEventListener("click", handleSaveEdit);
+    elements.deleteNoteBtn.addEventListener("click", handleDeleteNote);
+
+    elements.noteInput.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeComposer();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            handleCreateNote();
+        }
+    });
+
+    elements.editInput.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            state.isEditingModal = false;
+            renderModal();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            handleSaveEdit();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "n") {
+            event.preventDefault();
+            openComposer();
+        }
+        if (event.key === "Escape" && elements.noteModal.classList.contains("is-open")) {
+            closeModal();
+        }
+    });
+
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === "sync" && changes[STORAGE_KEY]) {
+            refreshNotes();
+        }
+    });
+
+    refreshNotes();
 });

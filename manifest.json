@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "description": "优雅的侧边栏笔记管理扩展",
   "permissions": [
-    "activeTab",
     "storage",
     "sidePanel"
   ],

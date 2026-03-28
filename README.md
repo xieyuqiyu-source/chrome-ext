@@ -1,188 +1,150 @@
 # chrome-ext
 
-一个基于 Chrome Manifest V3 的侧边栏笔记扩展，目标是提供一个轻量、直接、可本地优先使用的浏览器笔记工具，并保留继续开源演进的空间。
+> A polished Chrome Manifest V3 side panel notes extension focused on `chrome.storage.sync`.
 
-当前仓库同时包含两部分：
+[![Platform](https://img.shields.io/badge/platform-Chrome-blue)](https://www.google.com/chrome/)
+[![Manifest](https://img.shields.io/badge/manifest-v3-1f6feb)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![Storage](https://img.shields.io/badge/storage-chrome.storage.sync-b08968)](https://developer.chrome.com/docs/extensions/reference/api/storage)
 
-- Chrome 扩展本体
-- 一个用于登录与笔记同步的轻量 Node.js 服务端示例
+`chrome-ext` is a lightweight notes extension built around the Chrome Side Panel API. The current product direction is deliberately narrow: quick note capture, clean reading and editing, and automatic sync through the user's signed-in Chrome profile. There is no custom account system, no remote sync server, and no login flow.
 
-## 项目状态
+## Product Direction
 
-这是一个可运行的早期版本，核心能力已经具备：
+This repository now targets one clear use case:
 
-- 通过 Chrome Side Panel 打开笔记侧边栏
-- 在浏览器中创建、查看、编辑、删除笔记
-- 使用 `chrome.storage.sync` 保存笔记
-- 自动识别笔记中的 URL 并转换为可点击链接
-- 提供基础的弹窗调试能力
-- 附带一个本地可启动的云端同步服务示例
+- open a persistent side panel from the browser toolbar
+- write short notes quickly
+- edit and delete existing notes
+- export notes as plain text
+- rely on Chrome Sync for same-account multi-device sync
 
-目前仓库更适合作为开源开发基础版本，而不是已经完全产品化的发行版。
+That choice keeps the project small, maintainable, and practical for personal productivity.
 
-## 功能特性
+## Key Features
 
-### 1. 侧边栏笔记
+- Side panel note workflow built for Chrome Manifest V3
+- Local-first storage using `chrome.storage.sync`
+- Automatic cross-device sync for the same Chrome account
+- Search/filter across saved notes
+- Modal-based note viewing and editing
+- URL detection with clickable links
+- Keyboard shortcuts for fast capture
+- Refined card-based UI inspired by DaisyUI-style surfaces and controls
 
-- 点击扩展图标后直接打开侧边栏
-- 以卡片形式展示笔记列表
-- 支持新增、查看、编辑、删除
-- 支持相对时间和创建时间展示
-- 长文本内容通过弹窗查看
+## How Sync Works
 
-### 2. 数据存储
+The extension stores notes in `chrome.storage.sync`.
 
-- 默认使用 `chrome.storage.sync`
-- 适合保存轻量级跨设备同步数据
-- 不依赖第三方数据库即可完成基础使用
+That means notes can sync across devices when all of the following are true:
 
-### 3. 内容增强
+1. the user is signed in to Chrome
+2. Chrome Sync is enabled
+3. the extension is installed under the same Chrome profile
 
-- 自动识别 `http://`、`https://`、`www.` 形式的链接
-- 笔记详情中可直接点击跳转
-- 保留换行展示
+This project does not ship its own authentication or cloud backend. Sync is delegated to Chrome's built-in account sync system.
 
-### 4. 配套服务端示例
+## Limits and Tradeoffs
 
-`server/` 下提供一个简单的 Express 服务，用于演示：
+`chrome.storage.sync` is convenient, but it is not an unlimited database.
 
-- 用户登录 / 自动注册
-- 上传笔记到服务端
-- 从服务端下载笔记
-- 健康检查接口
+- best for lightweight text notes
+- not suitable for large attachments or very large datasets
+- sync timing is managed by Chrome, not by this extension
 
-这个服务端目前更偏演示用途，适合作为后续重构的起点。
+If the product later needs full-text archives, attachments, web access, or account-level collaboration, that would require a separate backend architecture.
 
-## 技术栈
+## Tech Stack
 
-- Chrome Extension Manifest V3
-- 原生 HTML / CSS / JavaScript
-- Chrome Side Panel API
-- Chrome Storage API
-- Node.js
-- Express
+- Chrome Extensions Manifest V3
+- Side Panel API
+- `chrome.storage.sync`
+- Vanilla HTML, CSS, and JavaScript
 
-## 目录结构
+## Project Structure
 
 ```text
 chrome-ext/
-├── manifest.json          # 扩展清单
-├── background.js          # 后台 service worker
-├── sidepanel.html         # 侧边栏页面
-├── sidepanel.js           # 侧边栏交互逻辑
-├── popup.html             # 扩展弹窗页面
-├── popup.js               # 弹窗脚本
-├── content.js             # 预留内容脚本
-├── injected.js            # 预留注入脚本
-├── install.html           # 安装说明页
-├── icons/                 # 扩展图标资源
-└── server/                # 轻量同步服务示例
-    ├── package.json
-    ├── server.js
-    └── start.sh
+├── manifest.json
+├── background.js
+├── sidepanel.html
+├── sidepanel.css
+├── sidepanel.js
+├── icons/
+└── README.md
 ```
 
-## 本地运行
+## Getting Started
 
-### 运行扩展
+### Load the extension in Chrome
 
-1. 打开 Chrome，进入 `chrome://extensions/`
-2. 打开右上角“开发者模式”
-3. 点击“加载已解压的扩展程序”
-4. 选择当前仓库目录 `chrome-ext`
-5. 点击扩展图标，侧边栏会自动打开
+1. Open `chrome://extensions/`
+2. Enable `Developer mode`
+3. Click `Load unpacked`
+4. Select `/Users/xieyuqiyu/Documents/xieyuqiyu/chrome-ext`
+5. Click the extension action button to open the side panel
 
-### 运行服务端
+## User Flow
 
-进入服务端目录后安装依赖并启动：
+1. Open the side panel from the extension action
+2. Click `新建笔记`
+3. Write content and save with `Ctrl + Enter`
+4. Browse notes as cards in reverse update order
+5. Open a note to read, edit, or delete it
+6. Use search to filter notes instantly
+7. Export all notes to the clipboard when needed
 
-```bash
-cd server
-npm install
-npm start
-```
+## Keyboard Shortcuts
 
-默认端口是 `8013`。
+- `Ctrl/Cmd + N`: open the composer
+- `Ctrl/Cmd + Enter`: save a new note or save edits
+- `Esc`: close the composer or modal
 
-健康检查接口：
+## Data Model
 
-```bash
-curl http://localhost:8013/api/health
-```
-
-## 服务端接口
-
-### `POST /api/login`
-
-用户登录接口。若用户不存在，会自动注册。
-
-请求示例：
+Notes are stored as lightweight objects:
 
 ```json
 {
-  "username": "demo",
-  "password": "123456"
+  "id": "lx8k9v-abc123",
+  "content": "note body",
+  "createdAt": 1710000000000,
+  "updatedAt": 1710001000000
 }
 ```
 
-### `POST /api/sync`
+Older note data using `timestamp` or `lastModified` is normalized in the UI layer for backward compatibility.
 
-同步笔记数据。
+## Recent Cleanup
 
-- `action=upload` 上传笔记
-- `action=download` 下载笔记
+The project was simplified to reduce maintenance overhead:
 
-上传请求示例：
+- removed the custom server-based sync direction
+- removed login and cloud-sync UI
+- removed demo popup tooling and placeholder extension scripts
+- reduced permissions to the minimum needed for side panel notes
+- rewrote the side panel UI and state handling to remove redundant logic
 
-```json
-{
-  "username": "demo",
-  "action": "upload",
-  "notes": [
-    {
-      "id": "note_1",
-      "content": "hello world",
-      "timestamp": 1710000000000
-    }
-  ]
-}
-```
+## Development Notes
 
-### `POST /api/download`
+- The extension is intentionally kept framework-free.
+- Styles live in `sidepanel.css` to avoid the previous monolithic inline CSS block.
+- UI behavior is centralized in `sidepanel.js`.
+- `chrome.storage.onChanged` is used so the panel can react when sync storage changes.
 
-根据用户名和密码读取用户笔记。
+## Known Gaps
 
-### `GET /api/health`
+- There is no automated test suite yet.
+- Search is simple substring matching.
+- Storage quota limits still apply because the project uses `chrome.storage.sync`.
+- There is no import flow yet, only export to clipboard.
 
-服务健康检查。
+## Suggested Next Steps
 
-## 开发说明
-
-当前代码以原生 JavaScript 为主，结构简单，便于快速迭代。建议按下面方向继续整理：
-
-- 明确区分“正式功能”和“调试/演示功能”
-- 补齐 `content.js`、`injected.js` 等预留文件的真实用途
-- 为服务端增加鉴权、数据校验和持久化方案
-- 增加构建脚本、代码格式化和自动化测试
-- 完善版本发布流程和变更记录
-
-## 已知限制
-
-- 仓库中仍有一些占位文件，例如空的 `DEVELOPMENT.md`、`TROUBLESHOOT.md`
-- 服务端当前使用文件存储，不适合生产环境
-- 登录和同步逻辑比较基础，安全性有限
-- 项目还没有完整的测试体系
-- 仓库还没有统一的开源治理文件，例如贡献指南、变更日志等
-
-## 适合的下一步
-
-如果你准备把它作为开源项目持续开发，比较合理的顺序是：
-
-1. 先整理权限、功能边界和产品定位
-2. 再补齐文档、License、贡献指南
-3. 然后拆分前端扩展逻辑与服务端逻辑
-4. 最后再做发布、商店上架或远程同步能力增强
+- add note pinning or tags
+- add import-from-text or JSON
+- add lightweight storage quota warnings
+- add packaging and release documentation for Chrome distribution
 
 ## License
 
-当前 `server/package.json` 中声明为 MIT，但仓库根目录还没有正式的 `LICENSE` 文件。若准备公开发布，建议补齐根目录许可证文件，并统一仓库整体授权方式。
+No root `LICENSE` file is included yet. Add one before public distribution.
