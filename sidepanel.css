@@ -507,7 +507,7 @@ body::after {
     width: auto;
     max-width: 948px;
     display: grid;
-    grid-template-columns: 1.35fr 1fr 1fr;
+    grid-template-columns: 1.35fr 1fr 1fr 1fr;
     gap: 6px;
     padding: 6px;
     border-radius: var(--radius-lg);
@@ -756,7 +756,7 @@ code {
     }
 
     .bottom-dock {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .monitor-footer {

@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
         noteInput: document.getElementById("noteInput"),
         saveNote: document.getElementById("saveNote"),
         cancelComposer: document.getElementById("cancelComposer"),
+        importNotes: document.getElementById("importNotes"),
         exportNotes: document.getElementById("exportNotes"),
         clearAllNotes: document.getElementById("clearAllNotes"),
         searchInput: document.getElementById("searchInput"),
@@ -19,6 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
         longNotesMetric: document.getElementById("longNotesMetric"),
         activityGrid: document.getElementById("activityGrid"),
         status: document.getElementById("status"),
+        importModal: document.getElementById("importModal"),
+        closeImportModal: document.getElementById("closeImportModal"),
+        importInput: document.getElementById("importInput"),
+        mergeImportBtn: document.getElementById("mergeImportBtn"),
+        replaceImportBtn: document.getElementById("replaceImportBtn"),
         noteModal: document.getElementById("noteModal"),
         closeModal: document.getElementById("closeModal"),
         modalTime: document.getElementById("modalTime"),
@@ -183,6 +189,98 @@ document.addEventListener("DOMContentLoaded", () => {
         await chrome.storage.sync.set({ [STORAGE_KEY]: payload });
     }
 
+    function parseExportDate(value) {
+        if (!value) return null;
+        const normalized = value.trim().replace(/\./g, "/").replace(/\s+/g, " ");
+        const match = normalized.match(
+            /^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+        );
+        if (!match) return null;
+
+        const [, year, month, day, hour = "0", minute = "0", second = "0"] = match;
+        const timestamp = new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second)
+        ).getTime();
+
+        return Number.isNaN(timestamp) ? null : timestamp;
+    }
+
+    function parseImportedNotes(text) {
+        const trimmed = text.trim();
+        if (!trimmed) return [];
+
+        const blocks = trimmed
+            .split(/\n\s*-{10,}\s*\n/g)
+            .map((block) => block.trim())
+            .filter(Boolean);
+
+        return blocks
+            .map((block) => {
+                const lines = block.split(/\r?\n/);
+                let createdAt = null;
+                let updatedAt = null;
+                let contentStartIndex = 0;
+
+                for (let index = 0; index < lines.length; index += 1) {
+                    const line = lines[index].trim();
+                    if (!line) {
+                        contentStartIndex = index + 1;
+                        break;
+                    }
+                    if (line.startsWith("# ")) continue;
+
+                    const createdMatch = line.match(/^创建时间[:：]\s*(.+)$/);
+                    if (createdMatch) {
+                        createdAt = parseExportDate(createdMatch[1]);
+                        continue;
+                    }
+
+                    const updatedMatch = line.match(/^更新时间[:：]\s*(.+)$/);
+                    if (updatedMatch) {
+                        updatedAt = parseExportDate(updatedMatch[1]);
+                        continue;
+                    }
+
+                    contentStartIndex = index;
+                    break;
+                }
+
+                const content = lines.slice(contentStartIndex).join("\n").trim();
+                if (!content) return null;
+
+                const created = createdAt || updatedAt || Date.now();
+                const updated = updatedAt || created;
+
+                return normalizeNote({
+                    id: generateId(),
+                    content,
+                    createdAt: created,
+                    updatedAt: updated
+                });
+            })
+            .filter(Boolean);
+    }
+
+    function mergeImportedNotes(existingNotes, importedNotes) {
+        const seen = new Set();
+        const merged = [];
+
+        [...existingNotes, ...importedNotes].forEach((note) => {
+            const normalized = normalizeNote(note);
+            const signature = `${normalized.content}\u0000${normalized.createdAt}\u0000${normalized.updatedAt}`;
+            if (seen.has(signature)) return;
+            seen.add(signature);
+            merged.push(normalized);
+        });
+
+        return sortNotes(merged);
+    }
+
     function openComposer() {
         elements.composerCard.classList.remove("is-hidden");
         elements.noteInput.focus();
@@ -191,6 +289,18 @@ document.addEventListener("DOMContentLoaded", () => {
     function closeComposer() {
         elements.composerCard.classList.add("is-hidden");
         elements.noteInput.value = "";
+    }
+
+    function openImportModal() {
+        elements.importModal.classList.add("is-open");
+        elements.importModal.setAttribute("aria-hidden", "false");
+        elements.importInput.focus();
+    }
+
+    function closeImportModal() {
+        elements.importModal.classList.remove("is-open");
+        elements.importModal.setAttribute("aria-hidden", "true");
+        elements.importInput.value = "";
     }
 
     function openModal(noteId) {
@@ -485,9 +595,40 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    async function handleImportNotes(mode) {
+        const importedNotes = parseImportedNotes(elements.importInput.value);
+        if (!importedNotes.length) {
+            showToast("未识别到可恢复的笔记内容", true);
+            elements.importInput.focus();
+            return;
+        }
+
+        if (
+            mode === "replace" &&
+            state.notes.length &&
+            !window.confirm("覆盖恢复会替换当前所有笔记，确定继续吗？")
+        ) {
+            return;
+        }
+
+        try {
+            const nextNotes =
+                mode === "replace"
+                    ? sortNotes(importedNotes)
+                    : mergeImportedNotes(state.notes, importedNotes);
+            await persistNotes(nextNotes);
+            closeImportModal();
+            await refreshNotes();
+            showToast(`已恢复 ${importedNotes.length} 条笔记`);
+        } catch (error) {
+            showToast(`恢复失败：${error.message}`, true);
+        }
+    }
+
     elements.toggleComposer.addEventListener("click", openComposer);
     elements.cancelComposer.addEventListener("click", closeComposer);
     elements.saveNote.addEventListener("click", handleCreateNote);
+    elements.importNotes.addEventListener("click", openImportModal);
     elements.exportNotes.addEventListener("click", handleExportNotes);
     elements.clearAllNotes.addEventListener("click", handleClearAllNotes);
     elements.searchInput.addEventListener("input", (event) => {
@@ -526,6 +667,14 @@ document.addEventListener("DOMContentLoaded", () => {
             closeModal();
         }
     });
+    elements.closeImportModal.addEventListener("click", closeImportModal);
+    elements.importModal.addEventListener("click", (event) => {
+        if (event.target === elements.importModal) {
+            closeImportModal();
+        }
+    });
+    elements.mergeImportBtn.addEventListener("click", () => handleImportNotes("merge"));
+    elements.replaceImportBtn.addEventListener("click", () => handleImportNotes("replace"));
 
     elements.editToggleBtn.addEventListener("click", () => {
         state.isEditingModal = true;
@@ -561,6 +710,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    elements.importInput.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeImportModal();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            handleImportNotes("merge");
+        }
+    });
+
     document.addEventListener("keydown", (event) => {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "n") {
             event.preventDefault();
@@ -568,6 +727,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (event.key === "Escape" && elements.noteModal.classList.contains("is-open")) {
             closeModal();
+        }
+        if (event.key === "Escape" && elements.importModal.classList.contains("is-open")) {
+            closeImportModal();
         }
     });
 

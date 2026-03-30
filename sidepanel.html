@@ -100,6 +100,9 @@
             <span class="dock-icon">+</span>
             <span>新建</span>
         </button>
+        <button class="dock-btn" id="importNotes">
+            <span>恢复</span>
+        </button>
         <button class="dock-btn" id="exportNotes">
             <span>导出</span>
         </button>
@@ -109,6 +112,25 @@
     </div>
 
     <div class="toast" id="status" role="status" aria-live="polite"></div>
+
+    <div class="modal" id="importModal" aria-hidden="true">
+        <div class="modal-card">
+            <div class="modal-head">
+                <p class="eyebrow">restore notes</p>
+                <button class="icon-btn small-close" id="closeImportModal" aria-label="关闭">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6.4 5.34 5.34 6.4 10.94 12l-5.6 5.6 1.06 1.06 5.6-5.6 5.6 5.6 1.06-1.06-5.6-5.6 5.6-5.6-1.06-1.06-5.6 5.6-5.6-5.6Z"/>
+                    </svg>
+                </button>
+            </div>
+            <p class="modal-meta">粘贴之前导出的纯文本笔记，支持追加导入或覆盖恢复。</p>
+            <textarea id="importInput" class="textarea modal-editor" placeholder="把导出的笔记文本完整粘贴到这里"></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="mergeImportBtn">追加导入</button>
+                <button class="btn btn-ghost" id="replaceImportBtn">覆盖恢复</button>
+            </div>
+        </div>
+    </div>
 
     <div class="modal" id="noteModal" aria-hidden="true">
         <div class="modal-card">
