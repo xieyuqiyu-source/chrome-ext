@@ -13,8 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
         totalNotesMetric: document.getElementById("totalNotesMetric"),
         charCountMetric: document.getElementById("charCountMetric"),
         activeDaysMetric: document.getElementById("activeDaysMetric"),
-        avgLengthMetric: document.getElementById("avgLengthMetric"),
-        visibleNotesMetric: document.getElementById("visibleNotesMetric"),
         streakMetric: document.getElementById("streakMetric"),
         lastUpdatedMetric: document.getElementById("lastUpdatedMetric"),
         storageMetric: document.getElementById("storageMetric"),
@@ -147,8 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.totalNotesMetric.textContent = `${notes.length}`;
         elements.charCountMetric.textContent = formatCompactNumber(totalChars);
         elements.activeDaysMetric.textContent = `${activeDays} / 48`;
-        elements.avgLengthMetric.textContent = `${avgLength} 字`;
-        elements.visibleNotesMetric.textContent = `${visibleNotes}`;
         elements.streakMetric.textContent = `${streak} 天`;
         elements.lastUpdatedMetric.textContent = latest ? formatRelativeTime(latest.updatedAt) : "暂无";
         elements.storageMetric.textContent = `${(estimatedBytes / 1024).toFixed(1)} KB`;

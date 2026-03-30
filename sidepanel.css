@@ -132,54 +132,63 @@ button {
     flex-wrap: wrap;
 }
 
+.modal-head {
+    padding-right: 52px;
+}
+
 .monitor-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    margin-bottom: 14px;
 }
 
 .monitor-score {
     display: flex;
-    align-items: baseline;
+    align-items: flex-end;
     gap: 4px;
+    padding-top: 2px;
 }
 
 .score-value {
-    font-size: 40px;
-    line-height: 1;
+    font-size: 52px;
+    line-height: 0.88;
     letter-spacing: -0.04em;
     font-weight: 500;
 }
 
 .score-unit {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
+    margin-bottom: 5px;
 }
 
 .monitor-legend {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 16px;
-    flex: 1;
+    gap: 8px 16px;
+    min-width: 0;
+    padding-top: 4px;
 }
 
 .legend-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: var(--muted);
-    font-size: 11px;
-    white-space: nowrap;
+    font-size: 12px;
+    min-width: 0;
 }
 
 .legend-item strong {
     color: var(--text);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    margin-left: auto;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .dot {
@@ -597,6 +606,7 @@ body::after {
 }
 
 .modal-card {
+    position: relative;
     width: min(100%, 760px);
     max-height: 90vh;
     overflow: auto;
@@ -614,14 +624,30 @@ body::after {
 }
 
 .icon-btn.small-close {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(245, 245, 247, 0.86);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .icon-btn.small-close svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
+}
+
+.icon-btn.small-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    transform: translateY(-1px);
 }
 
 .modal-meta {
@@ -690,6 +716,24 @@ code {
 
     .hero h1 {
         font-size: 40px;
+    }
+
+    .monitor-header {
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .score-value {
+        font-size: 42px;
+    }
+
+    .score-unit {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .monitor-legend {
+        gap: 8px 10px;
     }
 
     .panel-monitor,
