@@ -168,6 +168,14 @@ Build the release package with:
 ./scripts/build-release.sh
 ```
 
+## Stable Extension ID
+
+This project now includes a fixed manifest `key` so unpacked development builds keep a stable Chrome extension ID.
+
+- fixed development ID: `lmkjmpeimhepflgghhhepcnpjlgegikj`
+
+If you reload the unpacked extension from the same project, Chrome should keep using that ID instead of generating a new one.
+
 ## License
 
 No root `LICENSE` file is included yet. Add one before public distribution.

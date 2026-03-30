@@ -3,6 +3,7 @@
   "name": "我的笔记",
   "version": "1.0.1",
   "description": "一个轻量、专注、可随 Chrome 账号同步的侧边栏笔记扩展。",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuxvYp7FIfxJpVrNXzBK3NXHS8GGVlq1FIPjIZKrUrNU6pm4hG4GtD2XENbEqDVNxpRfry1MrilmsMd0LC62hJCtadXzGPC9SG22tEoPmvUPSXGxwNfwXeJJLfx2awF/mI06sGdZYX0KePY14elxUFVHLMOphHlKt/nAAU5SYODZmSl26IaKIg3TC2K51WhZEt+UATqT6E+vXCvPoAN1bx8f/ga/FkhI/62fnODlijkdBzZZuzG7aHJR+754WxlRytHky7arh/YgI9adb2XKcATXjnb05iWxrdVHS+VGkIW/4Yt1HD6cIwRdeXAEaud0YN4sfomCWXtusHEYr9+gI2QIDAQAB",
   "permissions": [
     "storage",
     "sidePanel"
