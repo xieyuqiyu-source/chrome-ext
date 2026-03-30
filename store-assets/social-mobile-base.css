@@ -1,0 +1,199 @@
+@import url("../sidepanel.css");
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #000;
+}
+
+.poster {
+    width: 1080px;
+    height: 1920px;
+    position: relative;
+    overflow: hidden;
+    color: #f5f5f7;
+    background:
+        radial-gradient(circle at 18% 8%, rgba(36, 198, 88, 0.16), transparent 24%),
+        radial-gradient(circle at 82% 10%, rgba(255, 255, 255, 0.06), transparent 18%),
+        linear-gradient(180deg, #020304 0%, #040507 30%, #08090d 100%);
+}
+
+.poster::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 54px 54px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 80%);
+    pointer-events: none;
+}
+
+.poster-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 82px 72px 70px;
+}
+
+.poster-badge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 12px;
+    min-height: 58px;
+    padding: 0 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: #d2d2da;
+    font-size: 24px;
+}
+
+.poster-badge::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--green);
+}
+
+.poster-title {
+    max-width: 880px;
+    margin: 30px 0 18px;
+    font-size: 104px;
+    line-height: 0.92;
+    letter-spacing: -0.08em;
+    font-weight: 800;
+}
+
+.poster-desc {
+    max-width: 860px;
+    margin: 0;
+    color: #b3b3bd;
+    font-size: 34px;
+    line-height: 1.65;
+}
+
+.device-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 0 18px;
+}
+
+.device {
+    position: relative;
+    width: 720px;
+    border-radius: 58px;
+    padding: 22px;
+    background: linear-gradient(180deg, #0f1014, #07080c);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 54px 140px rgba(0, 0, 0, 0.5);
+}
+
+.device::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 188px;
+    height: 10px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.device .app-shell {
+    width: 100%;
+    padding: 12px 0 102px;
+}
+
+.device .hero {
+    margin-bottom: 18px;
+}
+
+.device .hero h1 {
+    font-size: 60px;
+}
+
+.device .hero-subtitle {
+    font-size: 22px;
+}
+
+.device .search-field input,
+.device .note-preview,
+.device .note-meta,
+.device .badge,
+.device .notes-caption,
+.device .modal-meta,
+.device .modal-body {
+    font-size: 20px;
+}
+
+.device .panel-monitor,
+.device .panel-compact,
+.device .composer,
+.device .note-card,
+.device .modal-card {
+    border-radius: 32px;
+}
+
+.device .bottom-dock {
+    left: 22px;
+    right: 22px;
+    bottom: 22px;
+    transform: none;
+    width: auto;
+}
+
+.device .dock-btn {
+    min-height: 68px;
+    font-size: 24px;
+}
+
+.device .dock-icon {
+    width: 34px;
+    height: 34px;
+}
+
+.device .note-title {
+    font-size: 26px;
+}
+
+.device .modal {
+    position: absolute;
+    inset: 0;
+}
+
+.poster-features {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.feature-chip {
+    padding: 18px 20px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.feature-chip strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.feature-chip span {
+    color: #a9a9b4;
+    font-size: 20px;
+    line-height: 1.55;
+}

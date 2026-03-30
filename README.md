@@ -64,12 +64,18 @@ If the product later needs full-text archives, attachments, web access, or accou
 
 ```text
 chrome-ext/
+├── dist/
+├── icons/
 ├── manifest.json
 ├── background.js
+├── PRIVACY.md
+├── PUBLISHING.md
 ├── sidepanel.html
 ├── sidepanel.css
 ├── sidepanel.js
-├── icons/
+├── STORE_LISTING.md
+├── store-assets/
+├── scripts/
 └── README.md
 ```
 
@@ -144,6 +150,23 @@ The project was simplified to reduce maintenance overhead:
 - add import-from-text or JSON
 - add lightweight storage quota warnings
 - add packaging and release documentation for Chrome distribution
+
+## Release Prep
+
+This repository now includes basic Chrome Web Store preparation assets:
+
+- `PRIVACY.md` for privacy disclosure drafting
+- `STORE_LISTING.md` for listing copy
+- `PUBLISHING.md` for release steps
+- `icons/` for extension icons
+- `store-assets/promo-440x280.png` for the small promotional image
+- `scripts/build-release.sh` to generate the release zip
+
+Build the release package with:
+
+```bash
+./scripts/build-release.sh
+```
 
 ## License
 
