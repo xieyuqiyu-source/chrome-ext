@@ -505,7 +505,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const card = event.target.closest(".note-card");
         if (!card) return;
-        openModal(card.dataset.id);
+
+        const badgeAction = event.target.closest(".badge");
+        if (badgeAction && badgeAction.textContent === "查看详情") {
+            openModal(card.dataset.id);
+            return;
+        }
+
+        // 切换折叠状态
+        card.classList.toggle("is-expanded");
     });
 
     elements.notesList.addEventListener("keydown", (event) => {
